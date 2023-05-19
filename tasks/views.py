@@ -1,7 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.contrib.auth import login
+from django.db import IntegrityError
 
 def Tasks(request):
     return render(request, 'Tasks.html')
@@ -16,8 +18,15 @@ def Signup(request):
             try:
                 user = User.objects.create_user(username=request.POST['username'], password=request.POST['password1'])
                 user.save()
-                return HttpResponse('User created successfully')
-            except:
-                return HttpResponse('User already exist')
-        return HttpResponse('Password do not match')
-
+                login(request, user)
+                return render('tasks')
+            #para validar como usuarios ya creados en la BD con integrity
+            except IntegrityError:
+                return render(request, 'Signup.html', {
+                    'form': UserCreationForm,
+                    'error': 'User already exists'
+                })
+        return render(request, 'Signup.html', {
+                'form': UserCreationForm,
+                'error': 'Password do not match'
+            })
